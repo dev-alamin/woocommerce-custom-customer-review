@@ -32,6 +32,23 @@ class Admin {
         );
     }
 
+    /**
+     * Render the admin page HTML
+     * This function outputs the HTML for the admin page.
+     * It includes the form for submitting customer reviews,
+     * the star rating system, and the product selection dropdown.
+     * * It uses Alpine.js for interactivity and AJAX for form submission.
+     * * @since 1.0.0
+     * * @uses moduleDropdownField() to render the product dropdown
+     * * @uses NameList::get_names() to get the list of reviewer names
+     * * @uses WCCR_SCRIPTS.ajax_url to get the AJAX URL for form submission
+     * * @uses WCCR_SCRIPTS.nonce to get the nonce for security
+     * * @uses Alpine.js for reactive form handling
+     * * @uses productDropdown() to handle product selection
+     * * @uses reviewForm() to handle the review submission logic
+     *
+     * @return void
+     */
     public function admin_page_html() { ?>
      <div class="vh-wccr-app text-gray-800 font-sans max-w-2xl mx-auto mt-10 bg-blue-100 rounded-lg shadow-md">
         <div class="flex items-center justify-center pt-5 mb-6">
