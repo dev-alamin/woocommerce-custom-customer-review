@@ -26,8 +26,65 @@ function get_wc_products_for_dropdown() {
 		'default_select' => $first_product,
 	);
 }
+function vapehub_get_products_for_dropdown( WP_REST_Request $request ) {
+    $page      = max( 1, intval( $request->get_param( 'page' ) ) );
+    $per_page  = min( 100, intval( $request->get_param( 'per_page' ) ) ?: 20 );
+    $search    = sanitize_text_field( $request->get_param( 'search' ) );
 
+    $args = array(
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => $per_page,
+        'paged'          => $page,
+    );
 
+    if ( ! empty( $search ) ) {
+        $args['s'] = $search; // Correct key for WP_Query search
+    }
+
+    $query = new WP_Query( $args );
+
+    $options = [];
+
+    foreach ( $query->posts as $post ) {
+        $product = wc_get_product( $post->ID );
+        if ( $product && $product->get_name() ) {
+            $options[ $product->get_id() ] = $product->get_name();
+        }
+    }
+
+    $total_count = $query->found_posts;
+
+    return array(
+        'options'        => $options,
+        'default_select' => $page === 1 && ! empty( $options ) ? array_key_first( $options ) : '',
+        'has_more'       => $page * $per_page < $total_count,
+    );
+}
+
+add_action( 'rest_api_init', 'vapehub_register_product_dropdown_api' );
+
+function vapehub_register_product_dropdown_api() {
+    register_rest_route( 'vapehub/v1', '/products', array(
+        'methods'             => 'GET',
+        'callback'            => 'vapehub_get_products_for_dropdown',
+        'permission_callback' => '__return_true',
+        'args'                => array(
+            'page'      => array(
+                'type'    => 'integer',
+                'default' => 1,
+            ),
+            'per_page'  => array(
+                'type'    => 'integer',
+                'default' => 20,
+            ),
+            'search'    => array(
+                'type' => 'string',
+                'default' => '',
+            ),
+        ),
+    ) );
+}
 
 function moduleDropdownField( $name, $label, $options = array(), $selected = '', $xModel = '', $id = '', $extraClass = '' ) {
 	$id              = $id ?: $name;
@@ -52,12 +109,13 @@ function moduleDropdownField( $name, $label, $options = array(), $selected = '',
 	ob_start();
 	?>
 	<div 
-		x-data="{ 
-			open: false, 
-			selected: '<?php echo $defaultSelected; ?>', 
-			options: <?php echo $optionsJS; ?> 
-		}" 
-		class="relative w-full! max-w-md mb-6 <?php echo esc_attr( $extraClass ); ?>"
+        x-data="{ 
+            open: false, 
+            selected: '<?php echo $defaultSelected; ?>', 
+            options: <?php echo $optionsJS; ?>,
+        }"
+
+		class="relative w-full! mb-6 <?php echo esc_attr( $extraClass ); ?>"
 	>
 		<label for="<?php echo $dropdownId; ?>" class="block text-sm font-semibold text-gray-800 mb-2">
 			<?php echo $fieldLabel; ?>
@@ -74,29 +132,34 @@ function moduleDropdownField( $name, $label, $options = array(), $selected = '',
 			</svg>
 		</button>
 
-		<ul
-			x-show="open"
-			@click.away="open = false"
-			@keydown.escape.window="open = false"
-			x-transition:enter="transition ease-out duration-100"
-			x-transition:enter-start="opacity-0 scale-95"
-			x-transition:enter-end="opacity-100 scale-100"
-			x-transition:leave="transition ease-in duration-75"
-			x-transition:leave-start="opacity-100 scale-100"
-			x-transition:leave-end="opacity-0 scale-95"
-			class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg"
-		>
-			<template x-for="[key, label] in Object.entries(options)" :key="key">
-				<li 
-					@click="selected = key; <?php echo $xModelVar; ?> = key; open = false"
-					:class="{ 'bg-blue-100': selected === key }"
-					class="px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition"
-					x-text="label"
-				></li>
-			</template>
-		</ul>
+        <ul
+            x-show="open"
+            @click.away="open = false"
+            @keydown.escape.window="open = false"
+            x-transition:enter="transition ease-out duration-100"
+            x-transition:enter-start="opacity-0 scale-95"
+            x-transition:enter-end="opacity-100 scale-100"
+            x-transition:leave="transition ease-in duration-75"
+            x-transition:leave-start="opacity-100 scale-100"
+            x-transition:leave-end="opacity-0 scale-95"
+            class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg flex flex-wrap"
+        >
+            <!-- Standard options (excluding 'custom') -->
+            <template x-for="[key, label] in Object.entries(options)" :key="key">
+                <template x-if="key !== 'custom'">
+                    <li 
+                        @click="selected = key; reviewerName = label; open = false"
+                        :class="{ 'bg-blue-100': selected === key }"
+                        class="w-1/3 box-border px-4 font-bold py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition"
+                        x-text="label"
+                    ></li>
+                </template>
+            </template>
 
-		<input type="hidden" id="<?php echo $dropdownId; ?>" name="<?php echo $fieldKey; ?>" :value="selected" />
+        </ul>
+
+        <input type="hidden" id="<?php echo $dropdownId; ?>" name="<?php echo $fieldKey; ?>" :value="selected" />
+
 	</div>
 	<?php
 	return ob_get_clean();

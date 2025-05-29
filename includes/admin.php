@@ -71,7 +71,14 @@ function vh_wccr_admin_page_html() {
     ];
     ?>
      <div class="vh-wccr-app text-gray-800 font-sans max-w-2xl mx-auto mt-10 bg-blue-100 rounded-lg shadow-md">
-        <h1 class="text-3xl pt-5 pl-5 font-bold mb-6 text-blue-800 text-center uppercase">Customer Reviews</h1>
+        <div class="flex items-center justify-center pt-5 mb-6">
+            <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-blue-200 mr-3">
+            <svg class="w-7 h-7 text-blue-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17.25l-6.16 3.73 1.64-7.03L2 9.24l7.19-.61L12 2.5l2.81 6.13 7.19.61-5.48 4.71 1.64 7.03z"/>
+            </svg>
+            </span>
+            <h1 class="text-3xl font-bold text-blue-800 text-center uppercase">Add Customer Reviews Ratings</h1>
+        </div>
 
         <div x-data="reviewForm()" class="bg-white p-6 shadow-lg space-y-6 border border-gray-200">
             <?php
@@ -107,19 +114,55 @@ function vh_wccr_admin_page_html() {
                         placeholder="Write your review here..."></textarea>
             </div>
 
-            <!-- Product Select -->
-            <?php
-            $product_data = get_wc_products_for_dropdown();
-        
-            echo moduleDropdownField(
-                'selectedProduct',
-                'Choose Product',
-                $product_data['options'],
-                $product_data['default_select'],
-                'selectedProduct' // x-model var
-            );
-            ?>
+            <div
+                x-data="productDropdown()"
+                x-init="fetchProducts()"
+                class="relative"
+            >
+                <button
+                    @click="open = !open"
+                    class="w-full! flex items-center justify-between px-4 py-2.5 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                    x-text="options[selected] || 'Choose Product'"
+                ></button>
 
+               <ul
+                x-show="open"
+                @click.away="open = false"
+                class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg flex flex-wrap max-h-96 overflow-y-auto"
+            >
+                <!-- Search Input -->
+                <li class="w-full px-4 py-2">
+                    <input
+                        type="text"
+                        placeholder="Search products..."
+                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none border! border-gray-300! rounded-xl! shadow-sm! text-sm! text-gray-800! focus:outline-none! focus:ring-2! focus:ring-blue-500! transition!"
+                        x-model.debounce.500ms="searchTerm"
+                        @input="searchProducts()"
+                    />
+                </li>
+
+                <!-- Product Items -->
+                <template x-for="(label, key) in options" :key="key">
+                    <li 
+                       @click="selected = key; $store.reviewForm.selectedProduct = key; open = false"
+                        :class="{ 'bg-blue-100': selected === key }"
+                        class="w-1/3 box-border px-4 py-2 text-sm font-bold text-gray-700 hover:bg-blue-50 cursor-pointer transition"
+                        x-text="label"
+                    ></li>
+                </template>
+
+                <!-- Load More Button -->
+                <li class="w-full text-center py-2" x-show="hasMore">
+                    <button
+                        @click.stop="loadMore()"
+                        class="text-blue-600 hover:underline text-sm"
+                    >Load More</button>
+                </li>
+            </ul>
+
+
+                <input type="hidden" name="selectedProduct" :value="selected" />
+            </div>
             <!-- Review Date -->
             <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Review Date</label>
@@ -142,29 +185,77 @@ function vh_wccr_admin_page_html() {
             </div>
 
             <!-- Message -->
-            <div x-text="message" class="text-green-600 font-semibold mt-2"></div>
+            <div x-html="message" class="text-green-600 font-semibold mt-2"></div>
         </div>
         </div>
 
 
 
-    <script>
-        function reviewForm() {
+   <script>
+document.addEventListener('alpine:init', () => {
+    Alpine.store('reviewForm', {
+        selectedProduct: '',
+    });
+});
+
+function productDropdown() {
+    return {
+        open: false,
+        selected: '',
+        options: {},
+        hasMore: false,
+        page: 1,
+        per_page: 21,
+        searchTerm: '',
+        debounceTimer: null,
+
+        fetchProducts(reset = false) {
+            const pageToFetch = reset ? 1 : this.page;
+            fetch(`/wp-json/vapehub/v1/products?page=${pageToFetch}&per_page=${this.per_page}&search=${encodeURIComponent(this.searchTerm)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (reset) {
+                        this.options = data.options;
+                        this.page = 2;
+                    } else {
+                        this.options = { ...this.options, ...data.options };
+                        this.page++;
+                    }
+                    this.hasMore = data.has_more;
+                    if (!this.selected && data.default_select) {
+                        this.selected = data.default_select;
+                    }
+                });
+        },
+
+        loadMore() {
+            this.fetchProducts();
+        },
+
+        watchSearchTerm() {
+            this.$watch('searchTerm', () => {
+                clearTimeout(this.debounceTimer);
+                this.debounceTimer = setTimeout(() => {
+                    this.fetchProducts(true);
+                }, 300);
+            });
+        },
+
+        init() {
+            this.fetchProducts(true);
+            this.watchSearchTerm();
+        }
+    };
+}
+
+function reviewForm() {
     return {
         reviewerName: '',
         rating: 0,
         review: '',
-        selectedProduct: '', // matches your PHP xModel var
         reviewDate: '',
         message: '',
         loading: false,
-
-        reviewerNames: ['James Smith', 'Emily Johnson', 'Oliver Brown', 'Isla Wilson', 'Harry Davies'],
-        products: [
-            { id: 1, name: 'Wireless Mouse' },
-            { id: 2, name: 'Bluetooth Speaker' },
-            { id: 3, name: 'USB-C Charger' },
-        ],
 
         submitForm() {
             this.loading = true;
@@ -172,9 +263,7 @@ function vh_wccr_admin_page_html() {
 
             fetch(WCCR_SCRIPTS.ajax_url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: new URLSearchParams({
                     action: 'submit_wc_review',
                     nonce: WCCR_SCRIPTS.nonce,
@@ -182,21 +271,20 @@ function vh_wccr_admin_page_html() {
                     rating: this.rating,
                     review: this.review,
                     reviewDate: this.reviewDate,
-                    selectedProduct: this.selectedProduct
+                    selectedProduct: Alpine.store('reviewForm').selectedProduct,
                 }),
             })
             .then(res => res.json())
             .then(data => {
+                this.message = data.success
+                    ? (data.data || 'Review submitted successfully!')
+                    : (data.data || 'Failed to submit review.');
                 if (data.success) {
-                    this.message = 'Review submitted!';
-                    this.name = '';
+                    this.reviewerName = '';
                     this.rating = 0;
                     this.review = '';
-                    this.reviewDate,
-                    this.selectedProduct = '';
                     this.reviewDate = '';
-                } else {
-                    this.message = data.data || 'Failed to submit review.';
+                    Alpine.store('reviewForm').selectedProduct = '';
                 }
             })
             .catch(() => {
@@ -206,11 +294,10 @@ function vh_wccr_admin_page_html() {
                 this.loading = false;
             });
         }
-    }
+    };
 }
+</script>
 
-
-    </script>
     <?php
 }
 
@@ -256,5 +343,22 @@ function wccr_handle_submit_review() {
     // Set rating meta
     add_comment_meta($comment_id, 'rating', $rating);
 
-    wp_send_json_success('Review submitted');
+    $submitted_product = wc_get_product($product_id);
+
+    if (!$submitted_product) {
+        wp_send_json_error('Invalid product ID');
+    }
+    // once successfully submitted, show that X Product's review has been submitted
+    // Along with product link to visit
+    $product_link = get_permalink($product_id);
+    if ($product_link) {
+        $product_name = sprintf('<a href="%s" target="_blank">%s</a>', esc_url($product_link), esc_html($submitted_product->get_name()));
+    } else {
+        $product_name = esc_html($submitted_product->get_name());
+    }
+    $message = sprintf('Review for %s has been submitted successfully.', $product_name);
+    // Optionally, you can send a success message
+    wp_send_json_success($message);
+
+    die();
 }
