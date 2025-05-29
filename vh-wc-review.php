@@ -28,21 +28,49 @@
 defined( 'ABSPATH' ) || die( 'No script kiddies please!' );
 
 define( 'WCCR_VERSION', WP_DEBUG ? time() : '1.0.0' );
-define( 'WCCR_PLUGIN', __FILE__ );
 define( 'WCCR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'WCCR_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+define( 'WCCR_PLUGIN_FILE', __FILE__ );
+define( 'WCCR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
-add_action( 'plugins_loaded', 'WCCR_plugin_init' );
+
 /**
- * Load localization files
+ * Autoloader Main function
  *
+ * @param [type] $class
  * @return void
  */
-function WCCR_plugin_init() {
-    load_plugin_textdomain( 'wc_customer_review', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+function wccr_core_autoloader( $class ) {
+    $namespace = 'ADS\WCCR'; // Core namespace \ It could be ParentProject/SubProject;
+    $base_dir  = __DIR__ . '/includes/';
 
-    require_once __DIR__ . '/includes/admin.php';
-    require_once __DIR__ . '/assets.php';
-    require_once __DIR__ . '/functions.php';
+    $class = ltrim( $class, '\\' );
 
+    if ( strpos( $class, $namespace . '\\' ) === 0 ) {
+        $relative_class = substr( $class, strlen( $namespace . '\\' ) );
+        $file           = $base_dir . str_replace( '\\', '/', $relative_class ) . '.php';
+        if ( file_exists( $file ) ) {
+            require $file;
+        }
+    }
 }
+spl_autoload_register( 'wccr_core_autoloader' );
+
+/**
+ * Generic functions for the plugin
+ * This file contains utility functions that are used across the plugin.
+ * It is included here to ensure that all necessary functions are available
+ * before the plugin is fully loaded.
+ */
+require_once __DIR__ . '/functions.php';
+
+// Bootstrap plugin
+add_action( 'plugins_loaded', function () {
+    // Include necessary files
+    new ADS\WCCR\Assets();
+    new ADS\WCCR\Admin();
+    new ADS\WCCR\Ajax();
+    
+    // Load translations
+    load_plugin_textdomain( 'wc_customer_review', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+} );
