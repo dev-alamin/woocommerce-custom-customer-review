@@ -51,6 +51,7 @@ class Ajax {
 
         // Set rating meta
         add_comment_meta($comment_id, 'rating', $rating);
+        add_comment_meta($comment_id, 'verified', '1');
 
         $submitted_product = wc_get_product($product_id);
 
