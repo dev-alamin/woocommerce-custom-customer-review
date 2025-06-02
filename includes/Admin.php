@@ -258,11 +258,11 @@ class Admin {
                             ? (data.data || 'Review submitted successfully!')
                             : (data.data || 'Failed to submit review.');
                         if (data.success) {
-                            this.reviewerName = '';
-                            this.rating = 0;
+                            // this.reviewerName = ''; // Don't clear it as muliple reviews for same product might be saved
+                            // this.rating = 0; // Don't clear it as muliple reviews for same product might be saved
                             this.review = '';
                             this.reviewDate = '';
-                            Alpine.store('reviewForm').selectedProduct = '';
+                            // Alpine.store('reviewForm').selectedProduct = ''; // Don't clear it as muliple reviews for same product might be saved
                         }
                     })
                     .catch(() => {
