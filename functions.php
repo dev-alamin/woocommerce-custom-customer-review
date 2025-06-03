@@ -153,7 +153,8 @@ function moduleDropdownField( $name, $label, $options = array(), $selected = '',
             x-transition:leave="transition ease-in duration-75"
             x-transition:leave-start="opacity-100 scale-100"
             x-transition:leave-end="opacity-0 scale-95"
-            class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg flex flex-wrap"
+            class="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded-xl shadow-lg flex flex-wrap lg:w-[200%] lg:left-[-50%]"
+
         >
             <!-- Standard options (excluding 'custom') -->
             <template x-for="[key, label] in Object.entries(options)" :key="key">
@@ -161,7 +162,7 @@ function moduleDropdownField( $name, $label, $options = array(), $selected = '',
                     <li 
                         @click="selected = key; reviewerName = label; open = false"
                         :class="{ 'bg-blue-100': selected === key }"
-                        class="w-1/3 box-border px-4 font-bold py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition"
+                        class="w-full sm:w-1/2 lg:w-1/4 xl:w-1/8 box-border px-4 font-bold py-2 text-sm text-gray-700 hover:bg-blue-50 cursor-pointer transition"
                         x-text="label"
                     ></li>
                 </template>

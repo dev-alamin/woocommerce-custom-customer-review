@@ -65,7 +65,7 @@ class Admin {
         <div x-data="reviewForm()" class="bg-white p-6 shadow-lg space-y-6 border border-gray-200">
         <div class="w-full mb-6">
             <label for="reviewer_name" class="block text-sm font-semibold text-gray-800 mb-2">
-            <?php esc_html_e( 'Reviewer Name', 'wc_customer_review'); ?>  
+            <?php esc_html_e( 'Put Reviewer Name', 'wc_customer_review'); ?>  
             </label>
             <div class="relative">
                 <input
@@ -79,6 +79,17 @@ class Admin {
                 />
             </div>
         </div>
+
+        <?php
+        echo moduleDropdownField(
+            'reviewer_name',
+            'Or choose from the list',
+            NameList::get_names(),
+            'james_smith', // default
+            'reviewerName' // x-model var
+        );
+
+        ?>
 
         <!-- Star Rating -->
             <div>
@@ -134,7 +145,7 @@ class Admin {
                     <li 
                        @click="selected = key; $store.reviewForm.selectedProduct = key; open = false"
                         :class="{ 'bg-blue-100': selected === key }"
-                        class="w-1/3 box-border px-4 py-2 text-sm font-bold text-gray-700 hover:bg-blue-50 cursor-pointer transition"
+                        class="sm:w-1/2 lg:w-1/3 block box-border px-4 py-2 text-sm font-bold text-gray-700 hover:bg-blue-50 cursor-pointer transition"
                         x-html="label"
                     ></li>
                 </template>
