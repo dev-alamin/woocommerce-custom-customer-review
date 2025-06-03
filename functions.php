@@ -204,5 +204,3 @@ function moduleSelectTwo( $name, $label, $options = array(), $selected = '', $xM
 	<?php
 	return ob_get_clean();
 }
-
-

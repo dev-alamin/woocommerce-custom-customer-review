@@ -57,24 +57,32 @@ class Admin {
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 17.25l-6.16 3.73 1.64-7.03L2 9.24l7.19-.61L12 2.5l2.81 6.13 7.19.61-5.48 4.71 1.64 7.03z"/>
             </svg>
             </span>
-            <h1 class="text-3xl font-bold text-blue-800 text-center uppercase">Add Customer Reviews Ratings</h1>
+            <h1 class="text-3xl font-bold text-blue-800 text-center uppercase">
+                <?php esc_html_e( 'Add Customer Reviews Ratings', 'wc_customer_review') ?>
+            </h1>
         </div>
 
         <div x-data="reviewForm()" class="bg-white p-6 shadow-lg space-y-6 border border-gray-200">
-            <?php
-            echo moduleDropdownField(
-                'reviewer_name',
-                'Reviewer Name',
-                NameList::get_names(),
-                'james_smith', // default
-                'reviewerName' // x-model var
-            );
+        <div class="w-full mb-6">
+            <label for="reviewer_name" class="block text-sm font-semibold text-gray-800 mb-2">
+            <?php esc_html_e( 'Reviewer Name', 'wc_customer_review'); ?>  
+            </label>
+            <div class="relative">
+                <input
+                    type="text"
+                    x-model="reviewerName"
+                    id="reviewer_name"
+                    name="reviewer_name"
+                    value=""
+                    placeholder="E.g James Smith"
+                    class="w-full px-6 !py-[6px] !pl-[16px] text-sm !border-gray-300 !rounded-[12px] !shadow-md !focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-white transition bg-white placeholder-gray-400 text-gray-900"
+                />
+            </div>
+        </div>
 
-            ?>
-
-            <!-- Star Rating -->
+        <!-- Star Rating -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Rating</label>
+                <label class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e( 'Rating', 'wc_customer_review' ); ?></label>
                 <div class="flex space-x-1">
                     <template x-for="i in 5" :key="i">
                     <svg @click="rating = i" :class="rating >= i ? 'text-yellow-400' : 'text-gray-300'"
@@ -88,7 +96,7 @@ class Admin {
 
             <!-- Review Text -->
             <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Review</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e( 'Review Content', 'wc_customer_review' ); ?></label>
             <textarea x-model="review" rows="4"
                         class="block w-full p-3! border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none border! border-gray-300! rounded-xl! shadow-sm! text-sm! text-gray-800! focus:outline-none! focus:ring-2! focus:ring-blue-500! transition!"
                         placeholder="Write your review here..."></textarea>
@@ -136,7 +144,7 @@ class Admin {
                     <button
                         @click.stop="loadMore()"
                         class="text-blue-600 hover:underline text-sm"
-                    >Load More</button>
+                    ><?php esc_html_e( 'Load More', 'wc_customer_review' ); ?></button>
                 </li>
             </ul>
 
@@ -145,7 +153,7 @@ class Admin {
             </div>
             <!-- Review Date -->
             <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Review Date</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1"><?php esc_html_e( 'Choose Date', 'wc_customer_review' ); ?></label>
             <input type="date" x-model="reviewDate" id="reviewDate" name="reviewDate"
                     class="block w-full p-2! border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 border border-gray-300! rounded-xl! shadow-sm! text-sm! text-gray-800! focus:outline-none! focus:ring-2! focus:ring-blue-500! transition!" />
             </div>
