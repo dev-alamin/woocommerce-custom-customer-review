@@ -39,17 +39,27 @@ function vapehub_get_products_for_dropdown( WP_REST_Request $request ) {
     );
 
     if ( ! empty( $search ) ) {
-        $args['s'] = $search; // Correct key for WP_Query search
+        $args['s'] = $search;
     }
 
-    $query = new WP_Query( $args );
-
+    $query   = new WP_Query( $args );
     $options = [];
 
     foreach ( $query->posts as $post ) {
         $product = wc_get_product( $post->ID );
         if ( $product && $product->get_name() ) {
-            $options[ $product->get_id() ] = $product->get_name();
+            $product_id   = $product->get_id();
+            $product_name = esc_html( $product->get_name() );
+            $review_count = intval( $product->get_review_count() );
+
+            $options[ $product_id ] = sprintf(
+                '<div class="">
+                    <span class="text-gray-800 font-medium">%s</span>
+                    <span class="text-xs bg-blue-100 text-blue-800 rounded-full px-2 py-0.5">%d</span>
+                </div>',
+                $product_name,
+                $review_count
+            );
         }
     }
 
@@ -61,6 +71,7 @@ function vapehub_get_products_for_dropdown( WP_REST_Request $request ) {
         'has_more'       => $page * $per_page < $total_count,
     );
 }
+
 
 add_action( 'rest_api_init', 'vapehub_register_product_dropdown_api' );
 

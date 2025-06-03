@@ -102,7 +102,7 @@ class Admin {
                 <button
                     @click="open = !open"
                     class="w-full! flex items-center justify-between px-4 py-2.5 bg-white border border-gray-300 rounded-xl shadow-sm text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-                    x-text="options[selected] || 'Choose Product'"
+                    x-html="options[selected] || 'Choose Product'"
                 ></button>
 
                <ul
@@ -127,7 +127,7 @@ class Admin {
                        @click="selected = key; $store.reviewForm.selectedProduct = key; open = false"
                         :class="{ 'bg-blue-100': selected === key }"
                         class="w-1/3 box-border px-4 py-2 text-sm font-bold text-gray-700 hover:bg-blue-50 cursor-pointer transition"
-                        x-text="label"
+                        x-html="label"
                     ></li>
                 </template>
 
